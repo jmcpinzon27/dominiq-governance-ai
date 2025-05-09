@@ -3,20 +3,20 @@ import uuid
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
-
+from mangum import Mangum
 from db import get_db_conn
 from chat import chat_with_agent
 from emailer import send_mail
 
 load_dotenv()
 
-# Rutas estáticas (si empaquetas el build de React aquí)
+# Si sirves aquí el build de React, ponlo en backend/static/
 app = Flask(__name__, static_folder="static", static_url_path="/")
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-FRONTEND_BASE_URL = os.getenv("VITE_FE_ROOT")
+FRONTEND_BASE_URL = os.getenv("VITE_FE_ROOT", "http://localhost:5173")
 
-# Serve SPA (únicamente si metes el dist de React en backend/static)
+# Rutas para servir la SPA
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_spa(path):
@@ -24,7 +24,8 @@ def serve_spa(path):
         return send_from_directory(app.static_folder, path)
     return send_from_directory(app.static_folder, 'index.html')
 
-# --- Endpoints de lectura de catálogos ---
+# ————— Catálogos —————
+
 @app.route("/api/industries", methods=["GET"])
 def get_industries():
     conn = get_db_conn(); cur = conn.cursor()
@@ -33,9 +34,44 @@ def get_industries():
     cur.close(); conn.close()
     return jsonify(data)
 
-# ...otros endpoints GET (roles, axes, companies, projects) similares...
+@app.route("/api/roles", methods=["GET"])
+def get_roles():
+    conn = get_db_conn(); cur = conn.cursor()
+    cur.execute("SELECT role_id, role_name FROM roles ORDER BY role_name")
+    data = [{"role_id": r[0], "role_name": r[1]} for r in cur.fetchall()]
+    cur.close(); conn.close()
+    return jsonify(data)
 
-# --- Creación de responsables + envío de mails ---
+@app.route("/api/axes", methods=["GET"])
+def get_axes():
+    conn = get_db_conn(); cur = conn.cursor()
+    cur.execute("SELECT axis_id, axis_name FROM axis ORDER BY axis_name")
+    data = [{"axis_id": r[0], "axis_name": r[1]} for r in cur.fetchall()]
+    cur.close(); conn.close()
+    return jsonify(data)
+
+@app.route("/api/companies", methods=["GET"])
+def get_companies():
+    conn = get_db_conn(); cur = conn.cursor()
+    cur.execute("SELECT company_id, company_name FROM companies ORDER BY company_name")
+    data = [{"company_id": r[0], "company_name": r[1]} for r in cur.fetchall()]
+    cur.close(); conn.close()
+    return jsonify(data)
+
+@app.route("/api/projects", methods=["GET"])
+def get_projects():
+    company_id = request.args.get("company_id", type=int)
+    conn = get_db_conn(); cur = conn.cursor()
+    cur.execute(
+        "SELECT project_id, project_name "
+        "FROM projects WHERE company_id=%s ORDER BY project_name",
+        (company_id,)
+    )
+    data = [{"project_id": r[0], "project_name": r[1]} for r in cur.fetchall()]
+    cur.close(); conn.close()
+    return jsonify(data)
+
+# ————— Creación de responsables + mails —————
 @app.route("/api/submit-responsibles", methods=["POST"])
 def submit_responsibles():
     payload      = request.get_json()
@@ -55,7 +91,7 @@ def submit_responsibles():
             else:
                 cur.execute(
                     "INSERT INTO companies(company_name, industry_id) "
-                    "VALUES(%s,%s) RETURNING company_id",
+                    "VALUES (%s,%s) RETURNING company_id",
                     (cliente, industria_id)
                 )
                 company_id = cur.fetchone()[0]
@@ -72,7 +108,7 @@ def submit_responsibles():
             else:
                 cur.execute(
                     "INSERT INTO projects(project_name, company_id) "
-                    "VALUES(%s,%s) RETURNING project_id",
+                    "VALUES (%s,%s) RETURNING project_id",
                     (proyecto, company_id)
                 )
                 project_id = cur.fetchone()[0]
@@ -92,7 +128,7 @@ def submit_responsibles():
                 )
             else:
                 cur.execute(
-                    "INSERT INTO users(user_name,email,role_id,company_id) "
+                    "INSERT INTO users(user_name, email, role_id, company_id) "
                     "VALUES(%s,%s,%s,%s) RETURNING user_id",
                     (name, email, role_id, company_id)
                 )
@@ -101,9 +137,9 @@ def submit_responsibles():
             # 4) Create session & send invite mail
             session_token = str(uuid.uuid4())
             cur.execute(
-                "INSERT INTO sessions(user_id,project_id,axis_id,"
-                "session_token,session_start,is_active) "
-                "VALUES(%s,%s,%s,%s,NOW(),TRUE)",
+                "INSERT INTO sessions(user_id, project_id, axis_id, "
+                "session_token, session_start, is_active) "
+                "VALUES (%s,%s,%s,%s,NOW(),TRUE)",
                 (user_id, project_id, axis_id, session_token)
             )
             conn.commit()
@@ -123,20 +159,23 @@ def submit_responsibles():
     finally:
         cur.close(); conn.close()
 
-# --- Chat endpoints ---
+# ————— Chat endpoints —————
+
 @app.route("/api/chat/init", methods=["POST"])
 def chat_init():
     data = request.get_json()
     token = data.get("session_token")
-    # lógica de saludo y primera pregunta usando chat_with_agent o BD
-    return jsonify(...)
+    # aquí llamarías a chat_with_agent o usarías tu lógica de BD
+    # ejemplo mínimo:
+    greeting = chat_with_agent([{"role":"system","content":"start"}])
+    return jsonify(messages=[{"role":"assistant","content":greeting}])
 
 @app.route("/api/chat/message", methods=["POST"])
 def chat_message():
     data = request.get_json()
-    # lógica de guardar respuesta, siguiente pregunta, fin de encuesta y mail de cierre
-    return jsonify(...)
+    # guarda respuesta, llama a chat_with_agent, etc.
+    reply = chat_with_agent([{"role":"user","content": data.get("text","")}])
+    return jsonify(messages=[{"role":"assistant","content":reply}])
 
-# --- Handler para AWS Lambda ---
-from mangum import Mangum
+# ————— Lambda handler —————
 handler = Mangum(app, lifespan="off")
