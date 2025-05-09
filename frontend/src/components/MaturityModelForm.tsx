@@ -5,7 +5,7 @@ import {
   getAxes,
   getCompanies,
   getProjects,
-  submitResponsibles,
+  submitResponsibles
 } from "../api";
 
 export default function MaturityModelForm() {

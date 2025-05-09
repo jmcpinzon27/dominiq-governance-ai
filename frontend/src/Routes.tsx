@@ -7,12 +7,13 @@ export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/modelo-madurez-form" element={<ModeloMadurez />} />
-        {/* Cualquier otra ruta redirige a Home */}
+        <Route index element={<Home />} />
+        <Route path="modelo-madurez-form" element={<ModeloMadurez />} />
+        {/* any unknown URL => redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
 
