@@ -1,6 +1,6 @@
 // frontend/src/api/index.ts
 
-const BASE = import.meta.env.VITE_API_BASE_URL;  // debería ser algo como "http://localhost:5000/api"
+const BASE = "/api"  // proxy de Vite a http://localhost:5000
 
 export async function getIndustries() {
   const res = await fetch(`${BASE}/industries`);
