@@ -1,4 +1,3 @@
-// frontend/src/views/Home/Home.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import iconDominiQ from "../../assets/images/11.png";
@@ -19,8 +18,8 @@ export default function Home() {
         />
         <h3>DOMINIQ</h3>
         <p>
-          Agente de IA que apoya en la definición end-to-end de
-          modelos de gobierno de datos.
+          Agente de IA que apoya en la definición end-to-end de modelos de
+          gobierno de datos.
         </p>
       </div>
     </div>
