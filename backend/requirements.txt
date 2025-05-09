@@ -1,0 +1,8 @@
+Flask==2.3.6
+flask-cors==3.0.10
+python-dotenv==1.0.0
+psycopg2-binary==2.9.9
+boto3==1.26.149
+requests==2.31.0
+mangum==0.14.0
+starlette==0.32.0
