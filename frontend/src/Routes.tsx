@@ -10,7 +10,6 @@ export default function AppRoutes() {
       <Routes>
         <Route path="/" element={<Home/>}/>
         <Route path="/modelo-madurez-form" element={<ModeloMadurez/>}/>
-        <Route path="/modelo-madurez/:sessionToken" element={<ChatModeloMadurez/>}/>
       </Routes>
     </BrowserRouter>
   );
