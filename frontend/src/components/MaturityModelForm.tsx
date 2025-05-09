@@ -10,100 +10,76 @@ import {
 } from "../api";
 
 export default function MaturityModelForm() {
-  // estados para options
-  const [industries, setIndustries] = useState<{id:number,name:string}[]>([]);
-  const [companies, setCompanies]   = useState<{id:number,name:string}[]>([]);
-  const [projects, setProjects]     = useState<{id:number,name:string}[]>([]);
-  const [roles, setRoles]           = useState<{id:number,name:string}[]>([]);
-  const [axes, setAxes]             = useState<{id:number,name:string}[]>([]);
-
-  // estados para seleccion / inputs
-  const [industry, setIndustry] = useState<number>();
-  const [company, setCompany]   = useState<number>();
-  const [project, setProject]   = useState<number>();
-  const [responsibleName, setResponsibleName] = useState("");
-  const [email, setEmail]       = useState("");
-  const [role, setRole]         = useState<number>();
-  const [axis, setAxis]         = useState<number>();
+  // ... estados anteriores
 
   // al montar: carga catálogos sin filtro
-  useEffect(()=>{
+  useEffect(() => {
     getIndustries().then(setIndustries);
     getRoles().then(setRoles);
     getAxes().then(setAxes);
-  },[]);
+  }, []);
 
   // cada vez que cambia industry -> recarga companies
-  useEffect(()=>{
-    if(industry) {
+  useEffect(() => {
+    if (industry !== undefined) {
       getCompanies(industry).then(setCompanies);
       setCompany(undefined);
       setProjects([]);
       setProject(undefined);
     }
-  },[industry]);
+  }, [industry]);
 
   // cada vez que cambia company -> recarga projects
-  useEffect(()=>{
-    if(company) {
+  useEffect(() => {
+    if (company !== undefined) {
       getProjects(company).then(setProjects);
       setProject(undefined);
     }
-  },[company]);
+  }, [company]);
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if(!industry||!company||!project||!axis||!role||!responsibleName||!email) {
-      alert("Por favor completa todos los campos.");
-      return;
-    }
-    await submitResponsibles({
-      cliente: companies.find(c=>c.id===company)!.name,
-      proyecto: projects.find(p=>p.id===project)!.name,
-      industria: industry,
-      responsables: [
-        {
-          name: responsibleName,
-          email,
-          role: role,
-          eje: axis
-        }
-      ]
-    });
-    alert("¡Invitación enviada!");
-  };
+  // handler submit    ...
 
   return (
     <form className="card" onSubmit={onSubmit}>
       <h2>Modelo de Madurez</h2>
+
       <select
-        value={industry||""}
-        onChange={e=>setIndustry(Number(e.target.value))}
+        value={industry ?? ""}
+        onChange={e => {
+          const v = e.target.value;
+          setIndustry(v ? Number(v) : undefined);
+        }}
       >
         <option value="">-- Industria --</option>
-        {industries.map(i=>(
+        {industries.map(i => (
           <option key={i.id} value={i.id}>{i.name}</option>
         ))}
       </select>
 
       <select
-        value={company||""}
-        onChange={e=>setCompany(Number(e.target.value))}
-        disabled={!industry}
+        value={company ?? ""}
+        onChange={e => {
+          const v = e.target.value;
+          setCompany(v ? Number(v) : undefined);
+        }}
+        disabled={industry === undefined}
       >
         <option value="">-- Cliente --</option>
-        {companies.map(c=>(
+        {companies.map(c => (
           <option key={c.id} value={c.id}>{c.name}</option>
         ))}
       </select>
 
       <select
-        value={project||""}
-        onChange={e=>setProject(Number(e.target.value))}
-        disabled={!company}
+        value={project ?? ""}
+        onChange={e => {
+          const v = e.target.value;
+          setProject(v ? Number(v) : undefined);
+        }}
+        disabled={company === undefined}
       >
         <option value="">-- Proyecto --</option>
-        {projects.map(p=>(
+        {projects.map(p => (
           <option key={p.id} value={p.id}>{p.name}</option>
         ))}
       </select>
@@ -112,32 +88,37 @@ export default function MaturityModelForm() {
         type="text"
         placeholder="Responsable"
         value={responsibleName}
-        onChange={e=>setResponsibleName(e.target.value)}
+        onChange={e => setResponsibleName(e.target.value)}
       />
-
       <input
         type="email"
         placeholder="Email"
         value={email}
-        onChange={e=>setEmail(e.target.value)}
+        onChange={e => setEmail(e.target.value)}
       />
 
       <select
-        value={axis||""}
-        onChange={e=>setAxis(Number(e.target.value))}
+        value={axis ?? ""}
+        onChange={e => {
+          const v = e.target.value;
+          setAxis(v ? Number(v) : undefined);
+        }}
       >
         <option value="">-- Eje --</option>
-        {axes.map(a=>(
+        {axes.map(a => (
           <option key={a.id} value={a.id}>{a.name}</option>
         ))}
       </select>
 
       <select
-        value={role||""}
-        onChange={e=>setRole(Number(e.target.value))}
+        value={role ?? ""}
+        onChange={e => {
+          const v = e.target.value;
+          setRole(v ? Number(v) : undefined);
+        }}
       >
         <option value="">-- Rol --</option>
-        {roles.map(r=>(
+        {roles.map(r => (
           <option key={r.id} value={r.id}>{r.name}</option>
         ))}
       </select>
@@ -148,4 +129,5 @@ export default function MaturityModelForm() {
     </form>
   );
 }
+
 

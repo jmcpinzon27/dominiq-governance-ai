@@ -1,45 +1,52 @@
-/* apps/dominiq-ui/src/views/Home/Home.css */
-
+/* frontend/src/views/Home/Home.css */
 .home-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #f3f4f6;
-    padding: 1rem;
-  }
-  
-  .home-card {
-    width: 320px;
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    cursor: pointer;
-    text-align: center;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  .home-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-  }
-  
-  .home-card-img {
-    width: 100%;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    object-fit: cover;
-  }
-  
-  .home-card h3 {
-    margin: 0.75rem 0 0.25rem;
-    font-size: 1.25rem;
-    color: #111827;
-  }
-  
-  .home-card p {
-    margin: 0 1rem 1rem;
-    font-size: 0.9rem;
-    color: #4b5563;
-    line-height: 1.4;
-  }
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: var(--color-bg-page);
+  padding: 1rem;
+}
+
+.home-card {
+  width: 320px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  cursor: pointer;
+  text-align: center;
+  position: relative;
+  padding-top: 3rem; /* espacio para el icono */
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.home-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.home-card-img {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  position: absolute;
+  top: -48px;  /* la mitad de la altura, para que quede “colgando” */
+  left: calc(50% - 48px);
+}
+
+.home-card h3 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.home-card p {
+  margin: 0 1rem 1rem;
+  font-size: 0.9rem;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
   

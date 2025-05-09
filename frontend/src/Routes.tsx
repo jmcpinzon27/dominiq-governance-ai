@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Home from "./views/Home";
+import Home from "./views/Home/Home";
 import ModeloMadurez from "./views/ModeloMadurez";
 import ChatModeloMadurez from "./components/ChatModeloMadurez";
 
