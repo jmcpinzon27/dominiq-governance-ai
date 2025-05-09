@@ -1,81 +1,65 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { chatInit, chatMessage } from '../api/admin';
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { chatInit, chatMessage } from "../api";
 
 export default function ChatModeloMadurez() {
-  const { sessionToken } = useParams();
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [questionId, setQuestionId] = useState(null);
-  const [isLast, setIsLast] = useState(false);
+  const { sessionToken } = useParams<{ sessionToken:string }>();
+  const navigate = useNavigate();
 
-  useEffect(() => {
+  const [msgs, setMsgs]   = useState<{role:string,content:string}[]>([]);
+  const [qid, setQid]     = useState<number|null>(null);
+  const [opts, setOpts]   = useState<{numeric_value:number,option_text:string}[]>([]);
+  const [input, setInput] = useState("");
+
+  useEffect(()=>{
     if (!sessionToken) return;
-    chatInit(sessionToken)
-      .then(r => {
-        setMessages(r.data.messages);
-        setQuestionId(r.data.question_id);
-      })
-      .catch(console.error);
-  }, [sessionToken]);
-
-  const send = () => {
-    setMessages(m => [...m, { role:'user', content: input }]);
-    chatMessage({
-      session_token: sessionToken,
-      question_id: questionId,
-      answer: input
-    }).then(r => {
-      if (r.data.end) {
-        setMessages(m => [...m, { role:'assistant', content:'¡Encuesta finalizada!' }]);
-        setIsLast(true);
-      } else {
-        setMessages(m => [...m, ...r.data.messages]);
-        setQuestionId(r.data.question_id);
-      }
+    chatInit(sessionToken).then(data=>{
+      setMsgs(data.messages);
+      setQid(data.question_id);
+      setOpts(data.options);
     });
-    setInput('');
+  },[sessionToken]);
+
+  const onSend = async () => {
+    if (qid==null||!sessionToken) return;
+    setMsgs(m=>[...m,{role:"user",content:input}]);
+    const data = await chatMessage(sessionToken,qid,parseInt(input,10));
+    setMsgs(m=>[...m,...data.messages]);
+    if (data.end) {
+      alert("Encuesta finalizada");
+      navigate("/");
+    } else {
+      setQid(data.question_id);
+      setOpts(data.options);
+    }
+    setInput("");
   };
 
   return (
-    <div className="h-screen flex flex-col p-4 bg-gray-100">
-      <div className="flex-1 overflow-auto space-y-4">
-        {messages.map((m,i)=>(
-          <div key={i} className={m.role==='assistant' ? 'text-left' : 'text-right'}>
-            <div className={`inline-block px-4 py-2 rounded ${
-              m.role==='assistant' ? 'bg-gray-200' : 'bg-blue-600 text-white'
-            }`}>
+    <div className="h-screen flex flex-col p-6 bg-gray-100">
+      <h2 className="text-2xl font-bold mb-4">Chat Modelo de Madurez</h2>
+      <div className="flex-1 overflow-auto bg-white p-4 rounded space-y-3">
+        {msgs.map((m,i)=>(
+          <div key={i} className={m.role==="assistant"?"text-left":"text-right"}>
+            <span className={`inline-block px-3 py-2 rounded ${m.role==="assistant"?"bg-gray-200":"bg-blue-600 text-white"}`}>
               {m.content}
-            </div>
+            </span>
           </div>
         ))}
       </div>
-
-      {!isLast && (
-        <div className="flex gap-2">
-          <input
-            value={input}
-            onChange={e=>setInput(e.target.value)}
-            className="flex-1 p-2 border rounded"
-            placeholder="Escribe tu respuesta…"
-          />
-          <button
-            onClick={send}
-            className="bg-blue-500 text-white p-2 rounded"
-          >
-            Enviar
-          </button>
-        </div>
-      )}
-
-      {isLast && (
-        <button
-          onClick={()=>window.location.href=import.meta.env.VITE_FE_ROOT}
-          className="mt-4 w-full bg-green-600 text-white p-3 rounded"
-        >
-          Cerrar cuestionario
+      <div className="mt-4">
+        <input
+          type="text"
+          className="w-full p-2 border rounded"
+          placeholder="Escribe tu respuesta (número)"
+          value={input}
+          onChange={e=>setInput(e.target.value)}
+        />
+        <button onClick={onSend} className="mt-2 w-full bg-blue-500 text-white p-2 rounded">
+          Enviar
         </button>
-      )}
+      </div>
     </div>
   );
 }
+

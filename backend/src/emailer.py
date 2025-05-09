@@ -1,32 +1,31 @@
 import os
 import logging
+from botocore.exceptions import ClientError
+import boto3
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
-USE_SES = os.getenv("USE_SES", "false").lower() == "true"
-AWS_REGION = os.getenv("AWS_REGION")
+USE_SES          = os.getenv("USE_SES","false").lower()=="true"
+AWS_REGION       = os.getenv("AWS_REGION","eu-west-1")
 SES_SOURCE_EMAIL = os.getenv("SES_SOURCE_EMAIL")
 
 if USE_SES:
-    import boto3
     ses = boto3.client("ses", region_name=AWS_REGION)
 
-def send_mail(to_addr: str, subject: str, body: str):
-    """
-    Envía un correo usando AWS SES si USE_SES=true, o lo simula por log.
-    """
+def send_mail(to_addr, subject, body):
     if USE_SES:
         try:
             resp = ses.send_email(
                 Source=SES_SOURCE_EMAIL,
-                Destination={"ToAddresses": [to_addr]},
+                Destination={"ToAddresses":[to_addr]},
                 Message={
-                    "Subject": {"Data": subject},
-                    "Body":    {"Text": {"Data": body}}
+                    "Subject":{"Data":subject},
+                    "Body":{"Text":{"Data":body}}
                 }
             )
-            logger.info(f"SES send_email response: {resp}")
-        except Exception:
-            logger.error("Error sending SES email", exc_info=True)
+            logger.info(f"SES response: {resp}")
+        except ClientError as e:
+            logger.error(f"SES send_email failed: {e}")
     else:
-        logger.info(f"[MAIL SIMULATED] To:{to_addr}\nSubject:{subject}\n\n{body}")
+        logger.info(f"[MAIL SIMULADO]\nTo: {to_addr}\nSubject: {subject}\n\n{body}")

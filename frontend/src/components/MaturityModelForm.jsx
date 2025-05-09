@@ -1,116 +1,65 @@
-import React, { useEffect, useState } from 'react';
-import { getIndustries, submitResponsibles } from '../api/admin';
+import React, { useEffect, useState } from "react";
+import { fetchIndustries, fetchRoles, fetchAxes, submitResponsibles } from "../api";
 
 export default function MaturityModelForm() {
   const [industries, setIndustries] = useState([]);
-  const [cliente, setCliente] = useState('');
-  const [proyecto, setProyecto] = useState('');
-  const [industria, setIndustria] = useState('');
-  const [rows, setRows] = useState([
-    { name:'', email:'', eje:'', role:'' }
-  ]);
+  const [roles, setRoles]           = useState([]);
+  const [axes, setAxes]             = useState([]);
+  const [form, setForm]             = useState({
+    industria: "", cliente:"", proyecto:"", responsables: [{ name:"", email:"", role:"", eje:"" }]
+  });
 
-  useEffect(() => {
-    getIndustries().then(r => setIndustries(r.data));
-  }, []);
+  useEffect(()=>{
+    fetchIndustries().then(setIndustries);
+    fetchRoles().then(setRoles);
+    fetchAxes().then(setAxes);
+  },[]);
 
-  const updateRow = (i, field, val) => {
-    const copy = [...rows];
-    copy[i][field] = val;
-    setRows(copy);
+  const addRow = () => {
+    setForm(f=>({...f, responsables: [...f.responsables, {name:"",email:"",role:"",eje:""}]}));
   };
 
-  const addRow = () =>
-    setRows([...rows, { name:'', email:'', eje:'', role:'' }]);
+  const onChangeRow = (i: number, k: string, v:string) => {
+    const rs = [...form.responsables];
+    (rs[i] as any)[k] = v;
+    setForm(f=>({...f, responsables: rs}));
+  };
 
-  const removeRow = (i) =>
-    setRows(rows.filter((_,idx)=>idx!==i));
-
-  const handleSubmit = () => {
-    submitResponsibles({
-      cliente, proyecto, industria, responsables: rows
-    })
-    .then(()=>alert('Invitaciones enviadas!'))
-    .catch(e=>console.error(e));
+  const onSubmit = () => {
+    submitResponsibles(form).then(res=>{
+      alert("Invitaciones enviadas");
+    });
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
-        <input
-          placeholder="Cliente"
-          value={cliente}
-          onChange={e=>setCliente(e.target.value)}
-          className="p-2 border rounded flex-1"
-        />
-        <input
-          placeholder="Proyecto"
-          value={proyecto}
-          onChange={e=>setProyecto(e.target.value)}
-          className="p-2 border rounded flex-1"
-        />
-        <select
-          value={industria}
-          onChange={e=>setIndustria(e.target.value)}
-          className="p-2 border rounded"
-        >
-          <option value="">Industria</option>
-          {industries.map(i=>(
-            <option key={i.industry_id} value={i.industry_id}>
-              {i.industry_name}
-            </option>
-          ))}
+    <div className="bg-white p-6 rounded shadow space-y-4">
+      <h2 className="text-xl font-bold">Modelo de Madurez</h2>
+      <div className="space-y-2">
+        <select onChange={e=>setForm(f=>({...f, industria:e.target.value}))}>
+          <option value="">-- Industria --</option>
+          {industries.map((i:any)=><option key={i.industry_id} value={i.industry_id}>{i.industry_name}</option>)}
         </select>
+        <input placeholder="Cliente" onChange={e=>setForm(f=>({...f, cliente:e.target.value}))}/>
+        <input placeholder="Proyecto" onChange={e=>setForm(f=>({...f, proyecto:e.target.value}))}/>
       </div>
-
-      {rows.map((r,i)=>(
-        <div key={i} className="flex gap-2">
-          <input
-            placeholder="Responsable"
-            value={r.name}
-            onChange={e=>updateRow(i,'name',e.target.value)}
-            className="p-2 border rounded flex-1"
-          />
-          <input
-            placeholder="Email"
-            value={r.email}
-            onChange={e=>updateRow(i,'email',e.target.value)}
-            className="p-2 border rounded flex-1"
-          />
-          <input
-            placeholder="Eje (ID)"
-            value={r.eje}
-            onChange={e=>updateRow(i,'eje',e.target.value)}
-            className="p-2 border rounded w-24"
-          />
-          <input
-            placeholder="Rol (ID)"
-            value={r.role}
-            onChange={e=>updateRow(i,'role',e.target.value)}
-            className="p-2 border rounded w-24"
-          />
-          <button
-            onClick={()=>removeRow(i)}
-            className="bg-red-500 text-white p-2 rounded"
-          >
-            Eliminar
-          </button>
+      {form.responsables.map((r, i) => (
+        <div key={i} className="flex space-x-2">
+          <input placeholder="Responsable" value={r.name}
+            onChange={e=>onChangeRow(i,"name",e.target.value)}/>
+          <input placeholder="Email" value={r.email}
+            onChange={e=>onChangeRow(i,"email",e.target.value)}/>
+          <select value={r.eje} onChange={e=>onChangeRow(i,"eje",e.target.value)}>
+            <option value="">-- Eje --</option>
+            {axes.map((a:any)=><option key={a.axis_id} value={a.axis_id}>{a.axis_name}</option>)}
+          </select>
+          <select value={r.role} onChange={e=>onChangeRow(i,"role",e.target.value)}>
+            <option value="">-- Rol --</option>
+            {roles.map((rl:any)=><option key={rl.role_id} value={rl.role_id}>{rl.role_name}</option>)}
+          </select>
         </div>
       ))}
-
-      <button
-        onClick={addRow}
-        className="bg-green-500 text-white p-2 rounded"
-      >
-        + Añadir responsable
-      </button>
-
-      <button
-        onClick={handleSubmit}
-        className="mt-4 bg-blue-500 text-white p-2 rounded"
-      >
-        Enviar Invitaciones
-      </button>
+      <button onClick={addRow} className="bg-blue-500 text-white px-4 py-2 rounded">+ Agregar fila</button>
+      <button onClick={onSubmit} className="w-full bg-green-600 text-white px-4 py-2 rounded">Enviar Invitación</button>
     </div>
   );
 }

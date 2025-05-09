@@ -1,9 +1,9 @@
-import React from 'react';
-
+import React from "react";
 export default function Header() {
   return (
-    <header className="bg-white p-4 shadow">
-      <h1 className="text-xl font-bold text-center">DominiQ Governance AI</h1>
-    </header>
+    <div className="bg-gray-800 p-4 text-white flex justify-between">
+      <div className="font-bold text-lg">DominiQ</div>
+      <div>Proyecto 1</div>
+    </div>
   );
 }
